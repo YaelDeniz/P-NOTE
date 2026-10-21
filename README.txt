@@ -1,3 +1,130 @@
+# P-NOTE
+
+<!-- Short description of the project goes here -->
+
+## Requirements
+
+P-NOTE has been developed and tested with:
+
+| Component | Version |
+|-----------|---------|
+| OS | Ubuntu 24.04 (native or WSL2), x86_64 |
+| Compiler | GCC 13.3 |
+| C++ standard | C++17 |
+| CMake | ≥ 3.20 (tested with 3.28) |
+| CERN ROOT | **6.36.00**, built with `mathmore` enabled |
+| GSL | 2.7.1 |
+| Python | 3.12 |
+
+> **Important:** ROOT must be built with **MathMore** enabled, which requires GSL
+> to be installed *before* building ROOT. If GSL is missing, ROOT silently
+> disables MathMore and P-NOTE will fail to build.
+
+---
+
+## 1. Install system dependencies
+
+```bash
+sudo apt update
+sudo apt install -y \
+  git cmake g++ gcc binutils dpkg-dev make \
+  python3 python3-dev python3-numpy \
+  libx11-dev libxpm-dev libxft-dev libxext-dev \
+  libssl-dev libpcre3-dev libtbb-dev libvdt-dev \
+  libgsl-dev \
+  libglu1-mesa-dev libglew-dev libftgl-dev libgl2ps-dev \
+  libxml2-dev libsqlite3-dev libcfitsio-dev libcurl4-openssl-dev \
+  libfreetype-dev libfontconfig-dev \
+  libjpeg-dev libpng-dev libgif-dev libtiff-dev \
+  zlib1g-dev liblzma-dev libzstd-dev liblz4-dev libxxhash-dev \
+  nlohmann-json3-dev
+```
+
+Check that GSL is available:
+
+```bash
+gsl-config --version    # should print 2.7.1 or newer
+```
+
+---
+
+## 2. Build CERN ROOT 6.36.00 from source
+
+The build uses three folders in your home directory:
+`root_src` (source), `root_build` (temporary build files), and
+`root-install` (final installation).
+
+### 2.1 Download the source
+
+```bash
+cd ~
+git clone --branch v6-36-00 --depth=1 https://github.com/root-project/root.git root_src
+```
+
+### 2.2 Configure
+
+```bash
+mkdir -p ~/root_build && cd ~/root_build
+
+cmake ../root_src \
+  -DCMAKE_INSTALL_PREFIX=$HOME/root-install \
+  -DCMAKE_BUILD_TYPE=Release \
+  -DCMAKE_CXX_STANDARD=17 \
+  -Dfail-on-missing=ON \
+  -Dmathmore=ON \
+  -Dgdml=ON \
+  -Dopengl=ON \
+  -Dx11=ON \
+  -Dasimage=ON \
+  -Dimt=ON \
+  -Dpyroot=ON \
+  -Droofit=ON \
+  -Dtmva=ON \
+  -Dfitsio=ON \
+  -Dsqlite=ON \
+  -Dssl=ON \
+  -Dxml=ON \
+  -Dvdt=ON
+```
+
+Before continuing, check the line starting with `-- Enabled support for:`
+near the end of the output. It **must** include `mathmore`.
+
+### 2.3 Build and install
+
+```bash
+cmake --build . --target install -j$(nproc)
+```
+
+This can take 1–2 hours. If the build is killed due to low memory
+(common on WSL or laptops), re-run it with fewer jobs, e.g. `-j4`.
+It resumes where it stopped.
+
+### 2.4 Set up the environment
+
+```bash
+echo 'source $HOME/root-install/bin/thisroot.sh' >> ~/.bashrc
+source ~/.bashrc
+```
+
+### 2.5 Verify the installation
+
+```bash
+root-config --version          # 6.36.00
+root-config --has-mathmore     # yes
+root-config --features         # should include: mathmore geom gdml opengl
+```
+
+---
+
+## 3. Build P-NOTE
+
+```bash
+git clone <REPOSITORY-URL> P-NOTE
+cd P-NOTE
+make
+```
+
 WIP:
 If PNOTE ask for ROOT_INCLUDE/MATH/interpolaor.h directory
 

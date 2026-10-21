@@ -1,0 +1,22 @@
+# Build artifacts
+*.o
+*.so
+Earth3D
+obj/
+
+# Generated output data
+*.csv
+
+# NuFlux — exclude everything except the two active subdirectory .d files
+NuFlux/*.root
+NuFlux/*.sal
+NuFlux/*.gz
+NuFlux/*.d
+NuFlux/*.txt
+
+# Backup files
+Makefile_Copy_bk
+src/BackUps/
+main/*copy*.cpp
+main/*bkp*.cpp
+main/*_bkp.cp

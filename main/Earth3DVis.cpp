@@ -102,19 +102,70 @@ int main(int argc, char **argv)
 
   TApplication app("app", &argc, argv);
 
+  // =========================================================================
+  // Earth3DModel — available commands reference
+  // =========================================================================
+  //
+  // DISPLAY
+  //   test.ModelVisibility = true/false;
+  //       Show or hide the 3D OpenGL canvas.
+  //
+  // PREM TABLE
+  //   test.SetModel(std::string path2table);
+  //       Path to the PREM .txt file (e.g. prem_default.txt or prem_44layers.txt).
+  //
+  // NEUTRINO DIRECTION
+  //   test.SetDirection(double cth, double phi);
+  //       cth = cos(zenith angle), must be in [-1, 1].
+  //       phi = azimuthal angle in radians.
+  //
+  // DETECTOR POSITION
+  //   double pos[3] = {x, y, z};  test.SetDetector(pos);
+  //       Cartesian position in km. Default = KM3NeT site (0, 0, -6368).
+  //
+  // LLVP (Large Low-Velocity Province) — direct member access + method
+  //   test.PileThickness = 1000;      // LLVP height above CMB in km
+  //   test.aWidth       = 25.0;       // angular half-width in degrees
+  //   test.SetPile(bool on, std::string shape, double densityPct, double zoaPct);
+  //       shape: "pancake" (single shell) or "cake" (three-tiered, narrowing toward top)
+  //       densityPct: density contrast as percentage (e.g. 3.0 = +3%)
+  //       zoaPct:     Z/A (chemical composition) contrast as percentage
+  //
+  // SINGLE-LAYER MODIFICATION (legacy — use batch below when modifying multiple layers)
+  //   test.SetLayerProp(int row, double densityPct, double zoaPct);
+  //       row is 1-based PREM table row index.
+  //
+  // BATCH LAYER MODIFICATION
+  //   std::vector<LayerUpdate> updates;
+  //   LayerUpdate mod; mod.tableNumber = N; mod.densityContrast = X; mod.chemicalContrast = Y;
+  //   updates.push_back(mod);  // repeat for each layer
+  //   test.AddUpdatesList(updates);
+  //
+  // PATH COMPUTATION
+  //   std::vector<std::vector<double>> path = test.Create3DPath();
+  //       Each inner vector: { Li (km), density (g/cm³), Z/A, Ri (km) }
+  //       Call after all configuration is set. Also populates test.EarthCanvas.
+  //
+  // CANVAS
+  //   TCanvas* c = test.EarthCanvas;
+  //       Valid after Create3DPath(). Shows the 3D geometry with the neutrino path.
+  //
+  // =========================================================================
+
   Earth3DModel test;
   test.ModelVisibility = true;
 
-  //test.PileThickness = 1000;
-
-  //test.aWidth = 45;
+  test.PileThickness = 1000;
+  test.aWidth = 45;
   test.SetModel(path2prem);
 
   test.SetDirection(cth, phi);
-  
+
+  test.SetPile( true, "cake", 3.0, 0.0);
+  test.SetLayerProp(27, 0.0, 0.0);  // single-layer override: row 27, no density/chem contrast
+
   std::vector<LayerUpdate> Updates_;
-  //test.SetPile( true, "cake", 3.0, 0.0);
-  LayerUpdate mod; 
+  LayerUpdate mod;
 
   mod.tableNumber=44;      // 1-based PREM CSV row
   mod.densityContrast = 1000000 ;  // relative change in density (%)
@@ -139,9 +190,6 @@ int main(int argc, char **argv)
 
   test.AddUpdatesList(Updates_);
 
-  //test.NewLayerProp(7,50.0,0.0); // Density and Chemical Contrast
-  //test.NewLayerProp(14,200.0,0.0); // Density and Chemical Contrast
-  //test.SetLayerProp(28,400.0,0.0); // Density and Chemical Contrast
   
 
   

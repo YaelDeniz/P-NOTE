@@ -161,7 +161,7 @@ int main(int argc, char **argv)
 
   test.SetDirection(cth, phi);
 
-  test.SetPile( true, "cake", 3.0, 0.0);
+  test.SetPile( true, "pancake", 3.0, 0.0);
   test.SetLayerProp(27, 0.0, 0.0);  // single-layer override: row 27, no density/chem contrast
 
   std::vector<LayerUpdate> Updates_;

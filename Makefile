@@ -36,7 +36,7 @@ LDLIBS_NOMATH := -lOscProb -lGeom
 
 #OBJECTS = $(SOURCES:.c=.o)
 
-OBJECTS_AsivTrue = MathTools.o PhyTools.o Earth3DModel.o AsimovDataTrue.o 
+OBJECTS_Nint = MathTools.o PhyTools.o Earth3DModel.o AsimovDataTrue.o 
 OBJECTS_SensitivityTrue = MathTools.o PhyTools.o Earth3DModel.o AsimovDataTrue.o ExportData.o
 OBJECTS_AsivObs  = MathTools.o PhyTools.o Earth3DModel.o AsimovDataTrue.o AsimovDataObs.o 
 OBJECTS_SensitivityObs  = MathTools.o PhyTools.o Earth3DModel.o AsimovDataTrue.o AsimovDataObs.o ExportData.o
@@ -56,21 +56,21 @@ OBJECTS_EARTHMODEL = Earth3DModel.o #OscProbEarth.o
 
 #all: ObsN ObsSenv IntN IntSenv EarthSenv OscProbEarth HondaFlux Earth3D MatterN   #DetectorResolution   # All targets #Add StatsAnaTrue laters
 
-all: Earth3D
+all: Earth3D Nint
 
-MatterN: $(MAIN_DIR)/MatterEffect.cpp $(OBJECTS_AsivTrue) 
+MatterN: $(MAIN_DIR)/MatterEffect.cpp $(OBJECTS_Nint) 
 	@echo " "
-	@echo "Generating Application for True Events"
+	@echo "Generating Application for Matter Effect Example"
 	$(CC) -g $^ $(ROOT_FLAGS) $(LDFLAGS) $(LDLIBS) $(CPPFLAGS) -o $@
 	@echo " "
 	@echo "Matter effect example generator Done"
 
-IntN: $(MAIN_DIR)/IntOscGram.cpp $(OBJECTS_AsivTrue) 
+Nint: $(MAIN_DIR)/MakeInteractingEvents.cpp $(OBJECTS_Nint) 
 	@echo " "
-	@echo "Generating Application for True Events"
+	@echo "Generating Application for Interacting event distribution"
 	$(CC) -g $^ $(ROOT_FLAGS) $(LDFLAGS) $(LDLIBS) $(CPPFLAGS) -o $@
 	@echo " "
-	@echo "True event generator Done"
+	@echo "Ready to generate Interacting event distributions "
 
 IntSenv: $(MAIN_DIR)/TrueSensitivity.cpp $(OBJECTS_SensitivityTrue) 
 	@echo " "
@@ -93,13 +93,13 @@ ObsSenv: $(MAIN_DIR)/ObsSensitivity.cpp $(OBJECTS_SensitivityObs)
 	@echo " "
 	@echo "Application for observed sensitivity simulation ready"
 
-EarthSenv: $(MAIN_DIR)/EarthTrueSensitivity.cpp $(OBJECTS_AsivTrue) 
+EarthSenv: $(MAIN_DIR)/EarthTrueSensitivity.cpp $(OBJECTS_Nint) 
 	@echo " "
 	@echo "Generating Application for True Events"
 	$(CC) -g $^ $(ROOT_FLAGS) $(LDFLAGS) $(LDLIBS) $(CPPFLAGS) -o $@
 	@echo " "
 	@echo "True event generator Done"
-#StatsAnaTrue: $(MAIN_DIR)/StatsAnaTrue.cpp $(OBJECTS_AsivTrue)
+#StatsAnaTrue: $(MAIN_DIR)/StatsAnaTrue.cpp $(OBJECTS_Nint)
 #	@echo " "
 #	@echo "Generating Application for Statistical Analysis of True Events"
 #	$(CC) -g $^ $(ROOT_FLAGS) $(LDFLAGS) $(LDLIBS) $(CPPFLAGS) -o $@

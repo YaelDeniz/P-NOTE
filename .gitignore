@@ -17,6 +17,12 @@ NuFlux/*.txt
 # Backup files
 Makefile_Copy_bk
 src/BackUps/
+src/src_bkp/
+src/*copy*.C
+inc/inc_bkp/
+inc/*copy*.h
+main/main_bkp/
 main/*copy*.cpp
 main/*bkp*.cpp
-main/*_bkp.cp
+main/*_bkp.cpp
+

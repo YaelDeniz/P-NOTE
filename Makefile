@@ -36,10 +36,10 @@ LDLIBS_NOMATH := -lOscProb -lGeom
 
 #OBJECTS = $(SOURCES:.c=.o)
 
-OBJECTS_Nint = MathTools.o PhyTools.o Earth3DModel.o AsimovDataTrue.o 
-OBJECTS_SensitivityTrue = MathTools.o PhyTools.o Earth3DModel.o AsimovDataTrue.o ExportData.o
-OBJECTS_AsivObs  = MathTools.o PhyTools.o Earth3DModel.o AsimovDataTrue.o AsimovDataObs.o 
-OBJECTS_SensitivityObs  = MathTools.o PhyTools.o Earth3DModel.o AsimovDataTrue.o AsimovDataObs.o ExportData.o
+OBJECTS_Nint = MathTools.o PhyTools.o Earth3DModel.o InteractingEvents.o 
+OBJECTS_SensitivityTrue = MathTools.o PhyTools.o Earth3DModel.o InteractingEvents.o ExportData.o
+OBJECTS_AsivObs  = MathTools.o PhyTools.o Earth3DModel.o InteractingEvents.o AsimovDataObs.o 
+OBJECTS_SensitivityObs  = MathTools.o PhyTools.o Earth3DModel.o InteractingEvents.o AsimovDataObs.o ExportData.o
 
 OBJECTS_Res  = MathTools.o PhyTools.o  DetectorResolution.o 
 OBJECTS_OscProb  = MathTools.o PhyTools.o  OscProbEarth.o 
@@ -136,7 +136,7 @@ Earth3D: $(MAIN_DIR)/Earth3DVis.cpp $(OBJECTS_EARTHMODEL)
 
 #Build Objects
 
-AsimovDataTrue.o: $(SRC_DIR)/AsimovDataTrue.C MathTools.o PhyTools.o 
+InteractingEvents.o: $(SRC_DIR)/InteractingEvents.C MathTools.o PhyTools.o 
 	@echo "  "
 	@echo "Creating Asimov True Events Objects"
 	$(CC) -g -c $^ $(ROOT_FLAGS) $(LDFLAGS) $(LDLIBS) $(CPPFLAGS) -o $@
@@ -179,4 +179,4 @@ ExportData.o: $(SRC_DIR)/ExportData.C
 
 clean:
 	@echo "Removing Objects"
-	rm -f *.o ObsN ObsSenv IntN IntSenv EarthSenv OscProbEarth HondaFlux Earth3D MatterN
+	rm -f *.o ObsN ObsSenv Nint IntSenv EarthSenv OscProbEarth HondaFlux Earth3D MatterN

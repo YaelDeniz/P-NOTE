@@ -22,10 +22,6 @@
 //StatsTool
 void GetDiff2D( TH2D * histstd , TH2D * histalt, TH2D * diff)
 {
-
-
-   std::ofstream TrueDiffFile("SimulationResults/TrueEventsResults/EarthSensitivity2D.csv"); 
-
    double cth, e, Nexp, Nobs, dN;
 
 
@@ -43,14 +39,10 @@ void GetDiff2D( TH2D * histstd , TH2D * histalt, TH2D * diff)
 
                 diff->SetBinContent(i,k, dN);
 
-                TrueDiffFile << cth  << " , " << e << " , " << dN << std::endl;
 
             }
         }
         
-    TrueDiffFile.close();
-
-
 }
 
 double IntChi2( TH3D * histstd, TH3D * histalt)

@@ -1,5 +1,5 @@
 
-#ifdef  PLOTTOOLS_H
+#ifndef  PLOTTOOLS_H
 #define PLOTTOOLS_H
 
 #include <iostream>

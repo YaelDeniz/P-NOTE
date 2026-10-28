@@ -24,29 +24,19 @@
 
 #include "PremModel.h"
 #include "LayerUpdate.h"
-
-//Some import Earth Radius
-# define Rcmb 3480.0 // Core-Mantle-Boundary Radius (km)
-# define Rocean 6368.0 // Earth radius in (km)
-# define Rearth 6371.0 // Earth radius in (km)
-# define Ratm 6386.0 // Radius of the Atmosphere (km)
-
-//Some units
-# define mN   1.67492749804E-27  // Nucleons mass (~ Neutron mass) in kg
-# define MTon  1E9  //Metric MegaTon in kg
-# define years2sec 3.154E7 // Years in Seconds
+#include "PhyTools.h"
 
 int main(int argc, char **argv)
 {
 
     double PileHeight = 1000; // Height of LLVP in km
-    double PileRadius = Rcmb + PileHeight; //km
-    double DepthMin = Rcmb;
+    double PileRadius = R_CMB + PileHeight; //km
+    double DepthMin = R_CMB;
     double DepthMax = PileRadius; // Distance from the center of the Earth
     double PileDensityPct = 3.0; // 2% density contrats for LLVP
 
-  double zenmin = 180-TMath::ASin( DepthMax/Rocean )*(180.0/TMath::Pi()) ; // min 90
-  double zenmax = 180-TMath::ASin( (DepthMin)/Rocean )*(180.0/TMath::Pi()) ; // max 180
+  double zenmin = 180-TMath::ASin( DepthMax/R_OCEAN )*(180.0/TMath::Pi()) ; // min 90
+  double zenmax = 180-TMath::ASin( (DepthMin)/R_OCEAN )*(180.0/TMath::Pi()) ; // max 180
 
   std::cout << zenmin << " " << zenmax << std::endl;
 

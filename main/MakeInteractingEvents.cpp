@@ -33,26 +33,15 @@
 #include "PhyTools.h"
 #include "PlotTool.h"
 #include "StatsAna.h"
-#include "GetTrueEvents.h"
+#include "InteractingEvents.h"
 
 
 
-// Boundaries of major layers of the Earth
-# define R_CMB 3480.0 // Core-Mantle-Boundary Radius (km)
-# define R_OCEAN 6368.0 // Earth radius in (km)
-# define R_EARTH 6371.0 // Earth radius in (km)
-# define R_ATM 6386.0 // Radius of the Atmosphere (km)
-
-// Some relevant units
-# define M_n   1.67492749804E-27  // Nucleons mass (~ Neutron mass) in kg
-# define MTonYear  3.154E16  //Metric MegaTon-Year unit in kg-seconds
-# define MTon  1E9  //Metric MegaTon in kg
-# define years2sec 3.154E7 // Years in Seconds
 
 using namespace std;
 namespace fs = std::filesystem;
 
-void ExportToCSV(TH2D* stdhist, TH2D* althist, TH2D* hist, std::string filename);
+void ExportToCSV(TH2D* stdhist, TH2D* althist, int nhist, std::string filename);
 void RecordIntSimInputs(
     const fs::path& PATH_fluxtables,
     const fs::path& PATH_premtables,
@@ -78,14 +67,14 @@ int main(int argc, char **argv)
     // Paths for tables defining the neutrino flux and the Earth's matter profile
 
     fs::path PATH_fluxtables =
-    fs::current_path().parent_path() /
+    fs::current_path() /
     "fluxtables" /
     "SP_AziAveraged_solmin" / // Differential flux tables for the South Pole (SP), averaged over azimuthal angles(AziAveraged), and for solar minimum conditions (solmin).
     "spl-nu-20-01-000.d";
 
     std::cout << "Using flux tables from: " << PATH_fluxtables << std::endl;
     fs::path PATH_premtables =
-    fs::current_path().parent_path() /
+    fs::current_path() /
     "premtables" /
     "prem_44layers.txt";
     std::cout << "Using PREM tables from: " << PATH_premtables << std::endl;
@@ -103,7 +92,7 @@ int main(int argc, char **argv)
 
     double M_det = 10.0;       // detector mass in megaton units.
     double T_det = 10.0;       // detector time of data taking in years.
-    double Exposure_det = (M_det *T_det)*MTonYear ; // detector exposure in [Mton*years] units.
+    double Exposure_det = (M_det *T_det); //*MTonYear ; // detector exposure in [Mton*years] units.
 
 
     // To construct the pertubed Earth model, which containts an m-LLVP volume representing a LLVP,
@@ -131,12 +120,12 @@ int main(int argc, char **argv)
     double costh_min = cos(th_max * TMath::Pi() / 180.0);
     double costh_max = cos(th_min * TMath::Pi() / 180.0);
 
-    int nbins_th = 100;                      // number of zenith bins [90, 180] degrees
+    int nbins_th = 50;                      // number of zenith bins [90, 180] degrees
 
     // Azimuthal angle [degrees]
-    double phi_min = -50;
-    double phi_max = 50;
-    int nbins_phi = 100;                     // number of azimuth bins [0, 360] degrees
+    double phi_min = 40;
+    double phi_max = 150;
+    int nbins_phi = 50;                     // number of azimuth bins [0, 360] degrees
     double dphi = (phi_max - phi_min) / (2.0 * nbins_phi);
     double phi_lowedge = phi_min - dphi; // Lower edge of the first azimuthal bin
     double phi_upedge = phi_max + dphi;  // Upper edge of the last azimuthal bin
@@ -145,42 +134,50 @@ int main(int argc, char **argv)
     // Binning fo the neutrino energy range in GeV
     double enu_min = 1.0;
     double enu_max = 10.0;
-    int nbins_enu = 100;                      // number of neutrino energy bins
+    int nbins_enu = 50;                      // number of neutrino energy bins
 
     // flavor of the interacting neutrino  (0: nue, 1: numu, 2: nutau)
-    int flv_nu = 0;
+    int flv_nu = 1;
+
+    // Neutrino flavor label for file naming
+    std::string flvLabels[3] = {"nue", "numu", "nutau"};
+    std::string flvLabel = flvLabels[flv_nu];
+
+    // Create output directory before simulation so GetNint_ijk can write the azimuth cache file there
+    std::time_t simTime = std::time(nullptr);
+    std::tm localTime = *std::localtime(&simTime);
+    std::ostringstream timestampStream;
+    timestampStream << std::put_time(&localTime, "%Y-%m-%d_%H%M%S");
+    fs::path outputDir = fs::current_path() /
+        ("Nint_" + flvLabel + "_" + timestampStream.str());
+    fs::create_directories(outputDir);
 
     // Initialize Simulation
-    AsimovSimulation Nint_sim;
-    Nint_sim.PremTable = PATH_premtables;
-    Nint_sim.HondaTable = PATH_fluxtables;
-    Nint_sim.SetDetectorPosition(Location_det);
-    // Set intervals, binning, and exposure for the simulation
-    Nint_sim.SetIntervals(th_min, th_max, phi_lowedge, phi_upedge, enu_min, enu_max);
-    Nint_sim.SetBinning(nbins_th, nbins_phi, nbins_enu);
-    Nint_sim.SetExposure(Exposure_det);
-
-
+    NintSimulation Nint_sim;
+    Nint_sim.SetDetPosition(Location_det);
+    Nint_sim.SetTrueIntervals(enu_min, enu_max, th_min, th_max, phi_lowedge, phi_upedge);
+    Nint_sim.SetTrueBinning(nbins_enu, nbins_th, nbins_phi);
+    Nint_sim.SetDetExposure(M_det * T_det);
+    Nint_sim.SetOutputDir(outputDir);
 
     Nint_sim.MantleAnomaly = false; // Standard Earth model without m-LLVP
 
-    // Run simulation and generate events for Standard and Alternative
-    Nint_sim.flvf = flv_nu;
-    std::vector<TH2D*> Nint_reference = Nint_sim.GetTrueEvents3D();
+    // Run simulation and generate events for Standard model
+    Nint_sim.SetFlavor(flv_nu);
+    std::vector<TH2D*> Nint_reference = Nint_sim.GetNint_ijk();
 
     // Configure for Anomalous Earth Model (with LLVP)
     Nint_sim.MantleAnomaly = true;
     Nint_sim.PileHeight = h_mllvp;
     Nint_sim.aperture = 45;
     Nint_sim.AnomalyShape = geom_mllvp;
-    Nint_sim.PileDensityContrast = rhopct_mllvp;
+    Nint_sim.Pilerho_pct = rhopct_mllvp;
 
-    // Generate events for the perturbed  Earth model
-    Nint_sim.flvf = flv_nu;
-    std::vector<TH2D*> Nint_perturbed = Nint_sim.GetTrueEvents3D();
+    // Generate events for the perturbed Earth model
+    Nint_sim.SetFlavor(flv_nu);
+    std::vector<TH2D*> Nint_perturbed = Nint_sim.GetNint_ijk();
 
-    // Create output folder and record simulation inputs
-    fs::path outputDir;
+    // Record simulation inputs to the already-created output directory
     RecordIntSimInputs(
         PATH_fluxtables, PATH_premtables,
         flv_nu, geom_mllvp,
@@ -194,10 +191,6 @@ int main(int argc, char **argv)
         outputDir
     );
 
-    // Neutrino flavor label for file naming
-    std::string flvLabels[3] = {"nue", "numu", "nutau"};
-    std::string flvLabel = flvLabels[flv_nu];
-
     // Exporting Events
     for (int nhist = 0; nhist < static_cast<int>(Nint_perturbed.size()); ++nhist)
     {
@@ -206,8 +199,9 @@ int main(int argc, char **argv)
         TH2D* dNintpct_nphi = new TH2D(Form("OscDiff2D%d", nhist), Form("Oscillogram%d", nhist), nbins_th, costh_min, costh_max, nbins_enu, enu_min, enu_max);
 
         // Compute the percentage differences between distributions and export result to a CSV
-        GetDiff2D(Nint_reference[nhist], Nint_perturbed[nhist], dNintpct_nphi);
-        ExportToCSV(Nint_reference[nhist], Nint_perturbed[nhist], dNintpct_nphi, csvPath.string());
+        //GetDiff2D(Nint_reference[nhist], Nint_perturbed[nhist], dNintpct_nphi);
+        ExportToCSV(Nint_reference[nhist], Nint_perturbed[nhist], nhist, csvPath.string());
+        delete dNintpct_nphi;
     }
 
     // Simulation completed
@@ -217,22 +211,28 @@ int main(int argc, char **argv)
 }
 
 
-void ExportToCSV(TH2D* stdhist, TH2D* althist, TH2D* hist, std::string filename)
+void ExportToCSV(TH2D* stdhist, TH2D* althist, int nhist, std::string filename)
 {
     std::ofstream outfile(filename);
 
-    for (int i = 1; i <= hist->GetNbinsX(); ++i)
+    for (int i = 1; i <= stdhist->GetNbinsX(); ++i)
     {
-        for (int j = 1; j <= hist->GetNbinsY(); ++j)
+        for (int j = 1; j <= stdhist->GetNbinsY(); ++j)
         {
-            double x = hist->GetXaxis()->GetBinCenter(i);
-            double y = hist->GetYaxis()->GetBinCenter(j);
+            double x = stdhist->GetXaxis()->GetBinCenter(i);
+            double y = stdhist->GetYaxis()->GetBinCenter(j);
 
             double nexp = stdhist->GetBinContent(i, j);
             double nobs = althist->GetBinContent(i, j);
-            double diff = hist->GetBinContent(i, j);
+            //double diff = hist->GetBinContent(i, j);
+            double dn = 100*((nobs-nexp)/nexp);
 
-            outfile << x << "," << y << "," <<  nexp <<" , " << nobs << " , " << diff << std::endl;
+            if (dn > 0.0) {
+                std::cout << nhist <<  "AQUIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII"
+                        << std::endl;
+            }            
+
+            outfile << x << "," << y << "," <<  nexp <<" , " << nobs << " , " << dn << std::endl;
         }
     }
 
@@ -267,19 +267,7 @@ void RecordIntSimInputs(
     std::string flvLabels[3] = {"nue", "numu", "nutau"};
     std::string flvLabel = flvLabels[flv_nu];
 
-    // Generate timestamp
-    std::time_t now = std::time(nullptr);
-    std::tm localTime = *std::localtime(&now);
-
-    std::ostringstream timestampStream;
-    timestampStream << std::put_time(&localTime, "%Y-%m-%d_%H%M%S");
-
-    // Create output directory in the project root (parent of main/)
-    outputDir = fs::current_path().parent_path() /
-        ("Nint_" + flvLabel + "_" + timestampStream.str());
-
-    fs::create_directories(outputDir);
-
+    // outputDir is already created by the caller; write the inputs file into it
     fs::path inputPath = outputDir / "IntN_sim_input.txt";
 
     // Write simulation metadata

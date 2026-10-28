@@ -34,16 +34,6 @@
 #include "GetTrueEvents.h"
 
 
-# define myPi 3.14159265358979323846  /* pi */
-// Some Constants i need
-
-# define CMB 3480.0 // Core-Mantle-Boundary Radius (km)
-# define OCEAN_BOTTOM 6368.0 // Earth radius up to oceanic crust in (km)
-# define CONTIENTAL_CRUST 6371.0 // Earth radius in (km)
-# define ATM_RADIUS 6386.0 // Radius of the Atmosphere (km)
-# define NUCLEON_MASS   1.67492749804E-27  // Nucleons mass (~ Neutron mass) in kg
-# define MEGATON_KG  1E9  //Metric MegaTon in kg
-# define SECONDS_PER_YEAR 3.154E7 // Years in Seconds
 
 using namespace std;
 
@@ -68,10 +58,10 @@ int main(int argc, char **argv)
     // Detector parameters
     double Mass_unit = 10.0;              // Mass in megaton units
     double Time_unit = 10.0;       // Exposure time in years
-    double Exposure = (Mass_unit * MEGATON_KG )*(Time_unit * SECONDS_PER_YEAR); // Exposure in [Mton*years]
+    double Exposure = (Mass_unit * MTon )*(Time_unit * years2sec); // Exposure in [Mton*years]
 
     // Detector Position
-    double Detector_location = CONTIENTAL_CRUST;            // Radius at South Pole
+    double Detector_location = R_EARTH;            // Radius at South Pole
     double Coordinates[3] = {0.0, 0.0, -1.0 * Detector_location};
 
     // Paths for input and output files
@@ -80,8 +70,8 @@ int main(int argc, char **argv)
 
     // LLVP Configuration
     double h_llvp = 1000;                  // LLVP height in km
-    double r_llvp = CMB + h_llvp;          // LLVP radii
-    double depthMin = CMB - 2500;
+    double r_llvp = R_CMB + h_llvp;          // LLVP radii
+    double depthMin = R_CMB - 2500;
     double depthMax = r_llvp + 500;        // Max distance from Earth's center
     //double llvpDensityContrast = 2.0;          // LLVP density contrast percentage
     std::string mod_llvp = "cake";
@@ -151,7 +141,7 @@ int main(int argc, char **argv)
     experminet.HondaTable = fluxPath;
     experminet.SetDetectorPosition(Coordinates);
     experminet.SetIntervals(zenithMin, zenithMax, azimuthMin, azimuthMax, enuMin, enuMax);
-    experminet.SetBinning(energyBins,zenithBins, azimuthBins);
+    experminet.SetTrueBinning(energyBins, zenithBins, azimuthBins);
     experminet.SetExposure(Exposure);
     experminet.flvf = nuflv;
 

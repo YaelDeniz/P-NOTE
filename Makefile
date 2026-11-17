@@ -37,7 +37,7 @@ LDLIBS_NOMATH := -lOscProb -lGeom
 #OBJECTS = $(SOURCES:.c=.o)
 
 OBJECTS_Nint = MathTools.o PhyTools.o Earth3DModel.o InteractingEvents.o 
-OBJECTS_SensitivityTrue = MathTools.o PhyTools.o Earth3DModel.o InteractingEvents.o ExportData.o
+OBJECTS_IntSenv = MathTools.o PhyTools.o Earth3DModel.o InteractingEvents.o ExportData.o
 OBJECTS_AsivObs  = MathTools.o PhyTools.o Earth3DModel.o InteractingEvents.o AsimovDataObs.o 
 OBJECTS_SensitivityObs  = MathTools.o PhyTools.o Earth3DModel.o InteractingEvents.o AsimovDataObs.o ExportData.o
 
@@ -56,7 +56,7 @@ OBJECTS_EARTHMODEL = Earth3DModel.o #OscProbEarth.o
 
 #all: ObsN ObsSenv IntN IntSenv EarthSenv OscProbEarth HondaFlux Earth3D MatterN   #DetectorResolution   # All targets #Add StatsAnaTrue laters
 
-all: Earth3D Nint
+all: Earth3D Nint IntSenv
 
 MatterN: $(MAIN_DIR)/MatterEffect.cpp $(OBJECTS_Nint) 
 	@echo " "
@@ -72,12 +72,12 @@ Nint: $(MAIN_DIR)/MakeInteractingEvents.cpp $(OBJECTS_Nint)
 	@echo " "
 	@echo "Ready to generate Interacting event distributions "
 
-IntSenv: $(MAIN_DIR)/TrueSensitivity.cpp $(OBJECTS_SensitivityTrue) 
+IntSenv: $(MAIN_DIR)/MakeIntSenvProfiles.cpp $(OBJECTS_IntSenv) 
 	@echo " "
-	@echo "Generating application for true sensitivity simulations"
+	@echo "Generating application for Interacting Sensitivity Simulation"
 	$(CC) -g $^ $(ROOT_FLAGS) $(LDFLAGS) $(LDLIBS) $(CPPFLAGS) -o $@
 	@echo " "
-	@echo "Application for true sensitivity simulation ready"
+	@echo "Application for Interacting Sensitivity Simulation ready"
 
 ObsN: $(MAIN_DIR)/ObsOscGram.cpp $(OBJECTS_AsivObs) 
 	@echo " "
@@ -174,9 +174,14 @@ ExportData.o: $(SRC_DIR)/ExportData.C
 	@echo "Creating Data exportation tools"
 	$(CC) -c -g $^ $(ROOT_FLAGS) $(CPPFLAGS) -o $@
 
+StatsAna.o: $(SRC_DIR)/StatsAna.C
+	@echo "  "
+	@echo "Creating Statistical Analysis Objects"
+	$(CC) -c -g $^ $(ROOT_FLAGS) $(CPPFLAGS) -o $@
+
 
 
 
 clean:
 	@echo "Removing Objects"
-	rm -f *.o ObsN ObsSenv Nint IntSenv EarthSenv OscProbEarth HondaFlux Earth3D MatterN
+	rm -f *.o ObsN ObsSenv Nint IntSenv EarthSenv OscProbEarth HondaFlux Earth3D MatterN StatsAna
